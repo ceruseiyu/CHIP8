@@ -1,5 +1,6 @@
 #include "emulator.h"
 #include "stdint.h"
+#include "stdlib.h"
 
 //Size of RAM
 #define RAM_BYTES 4096
@@ -102,6 +103,14 @@ uint8_t display[8][32]
 void (*baseFunctions[])() = {clearDisplay, returnSub}
 uint16_t baseCalls[] = {INS_CLEAR_DISPLAY, INS_RETURN_SUB} 
 
+//Addr functions
+void (*addrFunctions[])() = {jump, call, loadI, jumpV0}
+uint16_t addrCalls[] = {INS_JUMP_ADDR, INS_CALL_ADDR, INS_LOAD_I, INS_JUMP_V0}
+
+//XKK functions
+void (*xkkFunctions[])() = {skipEqual, skipNotEqual, loadRegister, add, randomAND}
+uint16_t xkkCalls[] = {INS_SKIP_EQUAL, INS_SKIP_NOT_EQUAL, INS_LOAD_REGISTER, INS_ADD, INS_RANDOM_AND}
+
 //Main function caller
 void runInstruction() {
     if(checkBaseInstructions() != -1)
@@ -142,6 +151,10 @@ uint16_t getY() {
     return (curInstruction & INS_Y) >> 4;
 }
 
+uint8_t* getRegister(uint16_t regNumber) {
+    return generalRegisters(regNumber);
+}
+
 //Base Instructions
 void clearDisplay() {
     int i;
@@ -180,4 +193,41 @@ void loadI() {
 
 void jumpV0() {
     rPC = getAddr() + rV0;
+}
+
+//XKK instructions
+
+void skipEqual() {
+    uint8_t* reg = getRegister(getX());
+    uint16_t byte = getByte();
+    if(*reg == (uint8_t)byte) {
+        rPC++;
+    }
+}
+
+void skipNotEqual() {
+    uint8_t* reg = getRegister(getX());
+    uint16_t byte = getByte();
+    if(*reg != (uint8_t)byte) {
+        rPC++;
+    }
+}
+
+void loadRegister() {
+    uint8_t* reg = getRegister(getX());
+    uint16_t byte = getByte();
+    *reg = (uint8_t)byte;
+}
+
+void add() {
+    uint8_t* reg = getRegister(getX());
+    uint16_t byte = getByte();
+    *reg = *reg + (uint8_t)byte;
+}
+
+void randomAND() {
+    uint8_t* reg = getRegister(getX());
+    uint16_t byte = getByte();
+    uint8_t ran = rand() % 255;
+    *reg = ran & (uint8_t)byte;
 }
