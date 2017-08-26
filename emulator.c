@@ -32,9 +32,11 @@
 #define INS_NIBBLE 0x000F
 #define INS_X 0x0F00
 #define INS_Y 0x00F0
+#define INS_OPCODE 0xF000
 
 //Function counts
 #define BASE_FUNCTION_COUNT 2
+#define ADDR_FUNCTION_COUNT 5
 
 //Instruction IDs
 #define INS_CLEAR_DISPLAY 0x00E0
@@ -115,7 +117,10 @@ uint16_t xkkCalls[] = {INS_SKIP_EQUAL, INS_SKIP_NOT_EQUAL, INS_LOAD_REGISTER, IN
 void runInstruction() {
     if(checkBaseInstructions() != -1)
         return;
-    
+    if(checkAddrFunctions() != -1)
+        return;
+    if(checkXKKFunctions() != -1)
+        return;
 
 }
 
@@ -123,13 +128,38 @@ void runInstruction() {
 int checkBaseInstructions() {
     int i;
     for(i = 0; i < BASE_FUNCTION_COUNT; i++) {
-        if(baseCall[i] == curInstruction) {
+        if(baseCalls[i] == curInstruction) {
             (*baseFunctions[i])();
             return 1;
         }
     }
     return -1;
 }
+
+int checkAddrFunctions() {
+    int i;
+    uint16_t insOpCode = getOpCode();
+    for(i = 0; i < ADDR_FUNCTION_COUNT; i++) {
+        if(addrCalls[i] == insOpCode) {
+            (*addrFunctions[i])();
+            return 1;
+        }
+    }
+    return -1;
+}
+
+int checkXKKFunctions() {
+    int i;
+    uint16_t insOpCode = getOpCode();
+    for(i = 0; i < ADDR_FUNCTION_COUNT; i++) {
+        if(xkkCalls[i] == insOpCode) {
+            (*xkkFunctions[i])();
+            return 1;
+        }
+    }
+    return -1;
+}
+
 //Utility functions
 uint16_t getAddr() {
     return curInstruction & INS_ADDR;
@@ -153,6 +183,10 @@ uint16_t getY() {
 
 uint8_t* getRegister(uint16_t regNumber) {
     return generalRegisters(regNumber);
+}
+
+uint16_t getOpCode() {
+    return curInstruction & INS_OPCODE;
 }
 
 //Base Instructions
@@ -230,4 +264,4 @@ void randomAND() {
     uint16_t byte = getByte();
     uint8_t ran = rand() % 255;
     *reg = ran & (uint8_t)byte;
-}
+}   
