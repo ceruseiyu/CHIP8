@@ -113,6 +113,10 @@ uint16_t addrCalls[] = {INS_JUMP_ADDR, INS_CALL_ADDR, INS_LOAD_I, INS_JUMP_V0}
 void (*xkkFunctions[])() = {skipEqual, skipNotEqual, loadRegister, add, randomAND}
 uint16_t xkkCalls[] = {INS_SKIP_EQUAL, INS_SKIP_NOT_EQUAL, INS_LOAD_REGISTER, INS_ADD, INS_RANDOM_AND}
 
+//XY0 functions
+void (*xy0Functions[])() ={}
+uint_16_t xy0Calls[] = {}
+
 //Main function caller
 void runInstruction() {
     if(checkBaseInstructions() != -1)
@@ -265,3 +269,70 @@ void randomAND() {
     uint8_t ran = rand() % 255;
     *reg = ran & (uint8_t)byte;
 }   
+
+//XY0 Functions
+void skipEqualRegisters() {
+    GETXYREG();
+    if(*xReg == *yReg) {
+        rPC++;
+    }
+}
+
+void copyRegister() {
+    GETXYREG();
+    *xReg = *yReg;
+}
+
+void orRegisters() {
+    GETXYREG();
+    *xReg = *xReg | *yReg;
+}
+
+void andRegisters() {
+    GETXYREG();
+    *xReg = *xReg & *yReg;
+}
+
+void xorRegisters() {
+    GETXYREG();
+    *xReg = *xReg ^ *yReg;
+}
+
+void addRegisters() {
+    GETXYREG();
+    uint16_t check = (uint16_t)*xReg + (uint16_t)*yReg;
+    rVF = check > 255 ? 1 : 0;
+    *xReg = *xReg + *yReg;
+}
+
+void subRegisters() {
+    GETXYREG();
+    rVF = *xReg > *yReg ? 1 : 0;
+    *xReg = *xReg - *yReg;
+}
+
+void shiftRight() {
+    GETXYREG();
+    rVF = lsb == PIX_1 ? 1 : 0;
+    *xReg = xReg >> 1;
+}
+
+void subNotRegisters() {
+    GETXYREG();
+    rVF = *xReg > *yReg ? 0 : 1;
+    *xReg = *xReg - *yReg;
+}
+
+void shiftLeft() {
+    GETXREG()
+    uint8_t* msb = (xReg & PIX_8);
+    rVF = msb == PIX_8 ? 1 : 0;
+    *xReg = xReg << 1;
+}
+
+void skipNotEqualRegisters() {
+    GETXYREG();
+    if(*xReg != *yReg) {
+        rPC++;
+    }
+}
