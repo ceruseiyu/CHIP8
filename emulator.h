@@ -5,9 +5,7 @@
 
 #define GETYREG() uint8_t* yReg = getRegister(getY());
 
-#define GETXYREG()    GETXREG\
-                    GETYREG
-
-
+#define GETXYREG()    GETXREG()\
+                    GETYREG()
 
 #endif
