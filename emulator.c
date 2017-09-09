@@ -62,6 +62,7 @@
 #define INS_JUMP_V0 0xB000
 #define INS_RANDOM_AND 0xC000
 #define INS_DRAW_SPRITE 0xD000
+#define INS_SKIP_PRESSED 0xE09E
 #define INS_SKIP_NOT_PRESSED 0xE0A1
 #define INS_COPY_DT 0xF007
 #define INS_COPY_KEY 0xF00A
@@ -83,10 +84,14 @@ uint8_t rV4, rV5, rV6, rV7;
 uint8_t rV8, rV9, rVA, rVB;
 uint8_t rVC, rVD, rVE, rVF;
 
-uint8_t* generalRegisters = {&rV0, &rV1, &rV2, &rV3, &rV4, &rV5, &rV6, &rV7, &rV8, &rV9, &rVA, &rVB, &rVC, &rVD, &rVE, &rVF}
+uint8_t* generalRegisters = {&rV0, &rV1, &rV2, &rV3, &rV4, &rV5, &rV6, &rV7, &rV8, &rV9, &rVA, &rVB, &rVC, &rVD, &rVE, &rVF};
 
 //'I' memory address register
 uint16_t rI;
+
+//Timers
+uint8_t DT;
+uint8_t ST;
 
 //Stack pointer and stack
 uint8_t rSP;
@@ -99,23 +104,29 @@ uint16_t rPC;
 uint16_t curInstruction;
 
 //64x32 Monochrome display
-uint8_t display[8][32]
+uint8_t display[8][32];
 
 //Base functions without parameters
-void (*baseFunctions[])() = {clearDisplay, returnSub}
-uint16_t baseCalls[] = {INS_CLEAR_DISPLAY, INS_RETURN_SUB} 
+void (*baseFunctions[])() = {clearDisplay, returnSub};
+uint16_t baseCalls[] = {INS_CLEAR_DISPLAY, INS_RETURN_SUB}; 
 
 //Addr functions
-void (*addrFunctions[])() = {jump, call, loadI, jumpV0}
-uint16_t addrCalls[] = {INS_JUMP_ADDR, INS_CALL_ADDR, INS_LOAD_I, INS_JUMP_V0}
+void (*addrFunctions[])() = {jump, call, loadI, jumpV0};
+uint16_t addrCalls[] = {INS_JUMP_ADDR, INS_CALL_ADDR, INS_LOAD_I, INS_JUMP_V0};
 
 //XKK functions
-void (*xkkFunctions[])() = {skipEqual, skipNotEqual, loadRegister, add, randomAND}
-uint16_t xkkCalls[] = {INS_SKIP_EQUAL, INS_SKIP_NOT_EQUAL, INS_LOAD_REGISTER, INS_ADD, INS_RANDOM_AND}
+void (*xkkFunctions[])() = {skipEqual, skipNotEqual, loadRegister, add, randomAND};
+uint16_t xkkCalls[] = {INS_SKIP_EQUAL, INS_SKIP_NOT_EQUAL, INS_LOAD_REGISTER, INS_ADD, INS_RANDOM_AND};
 
 //XY0 functions
-void (*xy0Functions[])() ={}
-uint_16_t xy0Calls[] = {}
+void (*xy0Functions[])() = {skipEqualRegisters, copyRegister, orRegisters, andRegisters, xorRegisters, addRegisters, subRegisters, shiftRight, subNotRegisters, shiftLeft, skipNotEqualRegisters};
+uint_16_t xy0Calls[] = {INS_SKIP_EQUAL_REG, INS_COPY_REGISTER, INS_OR_REGISTERS, INS_AND_REGISTERS, INS_XOR_REGISTERS, INS_ADD_REGISTERS, INS_SUB_REGISTERS, INS_SHIFT_RIGHT, INS_SUBN_REGISTERS, INS_SHIFT_LEFT, INS_SKIP_NOT_EQUAL_REGISTERS};
+
+//XYN function is DRAW_SPRITE
+
+//X00 functions
+void (*x00Functions[])() = {};
+uint_16_t x00Calls[] = {};
 
 //Main function caller
 void runInstruction() {
@@ -186,7 +197,7 @@ uint16_t getY() {
 }
 
 uint8_t* getRegister(uint16_t regNumber) {
-    return generalRegisters(regNumber);
+    return generalRegisters[regNumber];
 }
 
 uint16_t getOpCode() {
@@ -334,5 +345,63 @@ void skipNotEqualRegisters() {
     GETXYREG();
     if(*xReg != *yReg) {
         rPC++;
+    }
+}
+
+//X00 Functions
+
+void skipPressed() {
+    
+}
+
+void skipNotPressed() {
+
+}
+
+void copyDT() {
+    GETXREG();
+    *xReg = DT;
+}
+
+void copyKey() {
+
+}
+
+void loadDT() {
+    GETXREG();
+    DT = *xReg;
+}
+
+void loadST() {
+    GETXREG();
+    ST = *xReg;
+}
+
+void addI() {
+    GETXREG();
+    rI = rI + *xReg;
+}
+
+void loadISprite() {
+    GETXREG();
+}
+
+void storeBCD() {
+
+}
+
+void storeRegister() {
+    uint_16_t i;
+    uint_8_t x = getX();
+    for(i = rI; i < rI + x + 1; i++) {
+        memory[PROGRAM_START + rI] = *getRegister(i);
+    }
+}
+
+void loadRegisterMemory() {
+    uint_16_t i;
+    uint_8_t x = getX();
+    for(i = rI; i < rI + x + 1; i++) {
+        *getRegister(i) = memory[PROGRAM_START + rI];
     }
 }
