@@ -1,6 +1,7 @@
 #include "emulator.h"
-#include "stdint.h"
-#include "stdlib.h"
+#include "bcd.h"
+#include <stdint.h>
+#include <stdlib.h>
 
 //Size of RAM
 #define RAM_BYTES 4096
@@ -17,14 +18,14 @@
 #define DISPLAY_WIDTH 8
 
 //Bitflag identifiers
-#define PIX_1 0x1
-#define PIX_2 0x2
-#define PIX_3 0x4
-#define PIX_4 0x8
-#define PIX_5 0x10
-#define PIX_6 0x20
-#define PIX_7 0x40
-#define PIX_8 0x80
+#define BIT_1 0x1
+#define BIT_2 0x2
+#define BIT_3 0x4
+#define BIT_4 0x8
+#define BIT_5 0x10
+#define BIT_6 0x20
+#define BIT_7 0x40
+#define BIT_8 0x80
 
 //Instruction sections
 #define INS_ADDR 0x0FFF
@@ -120,13 +121,13 @@ uint16_t xkkCalls[] = {INS_SKIP_EQUAL, INS_SKIP_NOT_EQUAL, INS_LOAD_REGISTER, IN
 
 //XY0 functions
 void (*xy0Functions[])() = {skipEqualRegisters, copyRegister, orRegisters, andRegisters, xorRegisters, addRegisters, subRegisters, shiftRight, subNotRegisters, shiftLeft, skipNotEqualRegisters};
-uint_16_t xy0Calls[] = {INS_SKIP_EQUAL_REG, INS_COPY_REGISTER, INS_OR_REGISTERS, INS_AND_REGISTERS, INS_XOR_REGISTERS, INS_ADD_REGISTERS, INS_SUB_REGISTERS, INS_SHIFT_RIGHT, INS_SUBN_REGISTERS, INS_SHIFT_LEFT, INS_SKIP_NOT_EQUAL_REGISTERS};
+uint16_t xy0Calls[] = {INS_SKIP_EQUAL_REG, INS_COPY_REGISTER, INS_OR_REGISTERS, INS_AND_REGISTERS, INS_XOR_REGISTERS, INS_ADD_REGISTERS, INS_SUB_REGISTERS, INS_SHIFT_RIGHT, INS_SUBN_REGISTERS, INS_SHIFT_LEFT, INS_SKIP_NOT_EQUAL_REGISTERS};
 
 //XYN function is DRAW_SPRITE
 
 //X00 functions
 void (*x00Functions[])() = {};
-uint_16_t x00Calls[] = {};
+uint16_t x00Calls[] = {};
 
 //Main function caller
 void runInstruction() {
@@ -324,7 +325,7 @@ void subRegisters() {
 
 void shiftRight() {
     GETXYREG();
-    rVF = lsb == PIX_1 ? 1 : 0;
+    rVF = lsb == BIT_1 ? 1 : 0;
     *xReg = xReg >> 1;
 }
 
@@ -336,8 +337,8 @@ void subNotRegisters() {
 
 void shiftLeft() {
     GETXREG()
-    uint8_t* msb = (xReg & PIX_8);
-    rVF = msb == PIX_8 ? 1 : 0;
+    uint8_t* msb = (xReg & BIT_8);
+    rVF = msb == BIT_8 ? 1 : 0;
     *xReg = xReg << 1;
 }
 
@@ -387,20 +388,28 @@ void loadISprite() {
 }
 
 void storeBCD() {
-
+    GETXREG();
+    *BCD bcdRep = getBCD(*xReg);
+    if(bcdRep == NULL) {
+        return;
+    }
+    memory[rI] = bcdRep->hundreds;
+    memory[rI + 1] = bcdRep->tens;
+    memory[rI + 2] = bcdRep->ones;
+    free(bcdRep);
 }
 
 void storeRegister() {
-    uint_16_t i;
-    uint_8_t x = getX();
+    uint16_t i;
+    uint8_t x = getX();
     for(i = rI; i < rI + x + 1; i++) {
         memory[PROGRAM_START + rI] = *getRegister(i);
     }
 }
 
 void loadRegisterMemory() {
-    uint_16_t i;
-    uint_8_t x = getX();
+    uint16_t i;
+    uint8_t x = getX();
     for(i = rI; i < rI + x + 1; i++) {
         *getRegister(i) = memory[PROGRAM_START + rI];
     }
