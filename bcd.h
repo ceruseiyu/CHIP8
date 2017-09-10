@@ -8,12 +8,6 @@
 #define BCD_TENS_BLOCK      0x0000F000
 #define BCD_ONES_BLOCK      0x00000F00
 
-/*
-#define BCD_CLEAR_HUNDREDS  0xFFF0FFFF
-#define BCD_CLEAR_TENS      0xFFFF0FFF
-#define BCD_CLEAR_ONES      0XFFFFF0FF
-*/
-
 typedef struct bcdrep {
     uint8_t hundreds;
     uint8_t tens;
